@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ค้นหาเครื่องจักร</title>
+
+<script src="xlsx.full.min.js"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 15px;
+}
+.container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+}
+h1 {
+    text-align: center;
+    font-size: 28px;
+}
+input, button {
+    width: 100%;
+    font-size: 22px;
+    padding: 14px;
+    margin-top: 12px;
+    border-radius: 10px;
+}
+button {
+    background: #007aff;
+    color: white;
+    border: none;
+    font-weight: bold;
+}
+.status {
+    margin-top: 10px;
+    font-size: 20px;
+    color: #d00;
+    text-align: center;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 20px;
+    margin-top: 15px;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    white-space: nowrap;
+}
+th {
+    background: #e9ecef;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🔍 ค้นหาเครื่องจักร</h1>
+    <input type="text" id="machineCode" placeholder="เช่น EFAZZ0001847">
+    <button onclick="searchMachine()">ค้นหา</button>
+    <div class="status" id="status"></div>
+    <table id="resultTable"></table>
+</div>
+
+<script>
+let rows = [];
+
+// โหลด Excel จาก GitHub Pages
+fetch("data.xlsx")
+    .then(res => res.arrayBuffer())
+    .then(data => {
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        // อ่านทุกแถวแบบ raw array
+        let allRows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        // ลบแถวหัวตาราง (แถวแรก)
+        rows = allRows.slice(1);
+
+        // ลบแถวว่าง
+        rows = rows.filter(r => r[0] !== undefined && r[0] !== null && String(r[0]).trim() !== "");
+    })
+    .catch(() => {
+        document.getElementById("status").innerText = "❌ โหลดไฟล์ Excel ไม่ได้";
+    });
+
+function normalize(text) {
+    return String(text || "")
+        .replace(/\s+/g, "")   // เอาช่องว่างออกทั้งหมด
+        .toUpperCase();        // ไม่สนตัวเล็กตัวใหญ่
+}
+
+function searchMachine() {
+    const input = normalize(document.getElementById("machineCode").value);
+
+    const result = rows.filter(row =>
+        normalize(row[0]) === input
+    );
+
+    render(result);
+}
+
+function render(data) {
+    const table = document.getElementById("resultTable");
+    const status = document.getElementById("status");
+    table.innerHTML = "";
+    status.innerText = "";
+
+    if (data.length === 0) {
+        status.innerText = "❌ ไม่พบข้อมูล";
+        return;
+    }
+
+    // แสดงทุกแถวที่เจอ
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach(cell => {
+            const td = document.createElement("td");
+            td.textContent = cell ?? "";
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    });
+}
+</script>
+
+</body>
+</html>
