@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ค้นหารหัสเครื่อง</title>
+
+<script src="xlsx.full.min.js"></script>
+
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 15px;
+}
+
+.container {
+    max-width: 100%;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+input[type="file"],
+input[type="text"],
+button {
+    width: 100%;
+    font-size: 22px;
+    padding: 14px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: #007aff;
+    color: white;
+    font-weight: bold;
+    border: none;
+}
+
+button:active {
+    background: #005bb5;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    white-space: nowrap;
+}
+
+th {
+    background: #e9ecef;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🔍 ค้นหารหัสเครื่อง</h1>
+
+    <input type="file" id="excelFile">
+
+    <input type="text" id="machineCode" placeholder="กรอกรหัสเครื่อง เช่น MC001">
+
+    <button onclick="searchMachine()">ค้นหา</button>
+
+    <div class="table-wrapper">
+        <table id="resultTable"></table>
+    </div>
+</div>
+
+<script>
+let excelData = [];
+let machineColumn = "";
+
+document.getElementById('excelFile').addEventListener('change', function(e) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        excelData = XLSX.utils.sheet_to_json(sheet);
+        machineColumn = Object.keys(excelData[0])[0];
+    };
+    reader.readAsArrayBuffer(e.target.files[0]);
+});
+
+function searchMachine() {
+    const code = document.getElementById('machineCode').value.trim();
+
+    const result = excelData.filter(row =>
+        String(row[machineColumn]).trim() === code
+    );
+
+    renderTable(result);
+}
+
+function renderTable(data) {
+    const table = document.getElementById('resultTable');
+    table.innerHTML = "";
+
+    if (data.length === 0) {
+        table.innerHTML = "<tr><td>❌ ไม่พบข้อมูล</td></tr>";
+        return;
+    }
+
+    const header = document.createElement('tr');
+    Object.keys(data[0]).forEach(key => {
+        const th = document.createElement('th');
+        th.textContent = key;
+        header.appendChild(th);
+    });
+    table.appendChild(header);
+
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        Object.values(row).forEach(val => {
+            const td = document.createElement('td');
+            td.textContent = val;
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    });
+}
+</script>
+
+</body>
+</html>
